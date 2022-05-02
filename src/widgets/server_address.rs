@@ -1,11 +1,9 @@
-use eframe::egui::{InnerResponse, Response, TextBuffer, TextEdit, Ui, Widget, WidgetWithState};
-use std::borrow::BorrowMut;
-use std::collections::HashMap;
+use eframe::egui::{Response, TextEdit, Ui, Widget};
+
 use std::str::FromStr;
-use tracing::{error, info};
-use tracing_subscriber::fmt::format;
-use url::quirks::password;
-use url::{Host, Url, UrlQuery};
+use tracing::{debug, error};
+
+use url::Url;
 
 pub struct ServerAddress<'a> {
     source_field: &'a mut Url,
@@ -24,17 +22,27 @@ impl<'a> ServerAddress<'a> {
         let mut host = self
             .source_field
             .host()
-            .and_then(|k| Some(format!("{k}")))
+            .map(|k| format!("{k}"))
             .unwrap_or_default();
 
-        let mut port = self.source_field.port().unwrap_or_default().to_string();
+        let mut port = self
+            .source_field
+            .port()
+            .map(|x| x.to_string())
+            .unwrap_or_default();
 
         let mut ssl = self
             .source_field
             .query_pairs()
             .find(|(key, _)| key == "ssl")
-            .and_then(|(_, value)| Some(value.parse().unwrap_or(false)))
+            .map(|(_, value)| value.parse().unwrap_or(false))
             .unwrap_or_default();
+
+        let mut srv = self.source_field.scheme().ends_with("+srv");
+
+        if srv {
+            self.source_field.set_port(None).unwrap();
+        }
 
         ui.vertical_centered(|ui| {
             ui.horizontal(|ui| {
@@ -48,11 +56,7 @@ impl<'a> ServerAddress<'a> {
                 {
                     match Url::from_str(&source_field) {
                         Ok(url) => {
-                            if let Some(host) = url.host() {
-                                self.source_field.set_host(Some(host.to_string().as_str()));
-                            }
-
-                            self.source_field.set_port(url.port()).unwrap();
+                            *self.source_field = url;
                         }
                         Err(ex) => {
                             error!("Could not do parse uri: {ex}")
@@ -70,7 +74,13 @@ impl<'a> ServerAddress<'a> {
                 });
                 ui.horizontal(|ui| {
                     ui.label("Port");
-                    if ui.text_edit_singleline(&mut port).changed() {
+                    if ui
+                        .add(TextEdit::singleline(&mut port).interactive(!srv))
+                        .changed()
+                    {
+                        if port.trim() == "" {
+                            self.source_field.set_port(None).unwrap();
+                        }
                         match port.parse() {
                             Ok(val) => self.source_field.set_port(Some(val)).unwrap(),
                             Err(e) => {
@@ -91,7 +101,7 @@ impl<'a> ServerAddress<'a> {
                 columns[1].horizontal(|ui| {
                     ui.label("Password");
                     if ui.text_edit_singleline(&mut password).changed() {
-                        if password == "" {
+                        if password.is_empty() {
                             self.source_field.set_password(None).unwrap();
                         } else {
                             self.source_field
@@ -121,6 +131,21 @@ impl<'a> ServerAddress<'a> {
                         .query_pairs_mut()
                         .append_pair("ssl", &ssl.to_string())
                         .finish();
+                }
+
+                if ui.checkbox(&mut srv, "Use +srv").changed() {
+                    let scheme = self.source_field.scheme().to_string();
+                    if !srv {
+                        debug!("Stripping +srv from scheme");
+                        self.source_field
+                            .set_scheme(scheme.strip_suffix("+srv").unwrap_or(&scheme))
+                            .unwrap();
+                    } else {
+                        debug!("Adding +srv from scheme");
+                        self.source_field
+                            .set_scheme(&format!("{scheme}+srv"))
+                            .unwrap();
+                    }
                 }
             });
         })

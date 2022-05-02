@@ -1,16 +1,30 @@
 mod app;
-pub mod widgets;
+mod db;
+mod widgets;
 
 use crate::app::MyApp;
 use eframe::egui::Vec2;
+use tracing::metadata::LevelFilter;
 
 fn main() {
-    tracing_subscriber::fmt::init();
+    #[cfg(debug_assertions)]
+    tracing_subscriber::fmt::fmt()
+        .with_max_level(LevelFilter::DEBUG)
+        .init();
+    #[cfg(not(debug_assertions))]
+    tracing_subscriber::fmt::fmt()
+        .with_max_level(LevelFilter::INFO)
+        .init();
+
     let app = MyApp::default();
-    let mut native_options = eframe::NativeOptions::default();
-    native_options.initial_window_size = Some(Vec2 {
-        x: 1000.0,
-        y: 500.0,
-    });
+
+    let native_options = eframe::NativeOptions {
+        initial_window_size: Some(Vec2 {
+            x: 1000.0,
+            y: 500.0,
+        }),
+        ..Default::default()
+    };
+
     eframe::run_native(Box::new(app), native_options);
 }
