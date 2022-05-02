@@ -11,12 +11,14 @@ use tracing::{debug, info};
 use crate::db::DbClient;
 use url::Url;
 
+type CollectionsVec = Vec<((String, String), Vec<(String, String, bool)>)>;
+
 pub struct MyApp {
     source: Url,
     target: Url,
     rt: Runtime,
     source_client: Option<Arc<DbClient>>,
-    collections: Option<Promise<MongoResult<Vec<((String, String), Vec<(String, String, bool)>)>>>>,
+    collections: Option<Promise<MongoResult<CollectionsVec>>>,
     mg_err: Option<(String, MongoError)>,
 }
 

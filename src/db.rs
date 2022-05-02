@@ -1,17 +1,12 @@
+use mongodb::error::{Error as MongoError, Result as MongoResult};
 use mongodb::Client;
-use mongodb::{
-    error::{Error as MongoError, Result as MongoResult},
-    options::ListDatabasesOptions,
-};
-use std::fmt::{Display, Formatter};
-use std::sync::atomic::{AtomicU8, AtomicUsize};
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc::{channel, Sender};
 use tracing::{debug, info};
 use url::Url;
 
-pub type DbSender = Sender<(Request, Sender<Response>)>;
-pub type DbChannel = (Request, Sender<Response>);
+type DbSender = Sender<(Request, Sender<Response>)>;
+type DbChannel = (Request, Sender<Response>);
 
 #[derive(Debug)]
 enum Request {
@@ -27,7 +22,6 @@ enum Response {
 
 pub struct DbClient {
     tx: DbSender,
-    count: AtomicUsize,
 }
 
 impl DbClient {
@@ -73,10 +67,7 @@ impl DbClient {
             }
         });
 
-        Ok(Self {
-            tx,
-            count: AtomicUsize::new(1),
-        })
+        Ok(Self { tx })
     }
 
     pub async fn get_collections(&self) -> MongoResult<Vec<(String, Vec<String>)>> {
@@ -85,6 +76,7 @@ impl DbClient {
 
         if let Some(result) = rx.recv().await {
             debug!("{result:?}");
+            #[allow(unreachable_patterns)]
             return match result {
                 Response::MongoError(ex) => Err(ex),
                 Response::Collections(collections) => Ok(collections),
