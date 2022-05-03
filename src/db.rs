@@ -5,6 +5,7 @@ use tokio::sync::mpsc::{channel, Sender};
 use tracing::{debug, info};
 use url::Url;
 
+pub type Db = ((String, String), Vec<(String, String, bool)>);
 type DbSender = Sender<(Request, Sender<Response>)>;
 type DbChannel = (Request, Sender<Response>);
 

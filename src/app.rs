@@ -1,28 +1,25 @@
 use crate::widgets::server_address::ServerAddress;
-use eframe::egui::{Context, FontData, FontDefinitions, FontFamily, Visuals};
-use eframe::epi::{Frame, Storage};
-use eframe::{egui, epi};
+use eframe::egui::{FontData, FontDefinitions, FontFamily, Visuals};
+use eframe::{egui, App, CreationContext, Frame};
 use mongodb::error::{Error as MongoError, Result as MongoResult};
 use poll_promise::Promise;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
 use tracing::{debug, info};
 
-use crate::db::DbClient;
+use crate::db::{Db, DbClient};
 use url::Url;
 
-type CollectionsVec = Vec<((String, String), Vec<(String, String, bool)>)>;
-
-pub struct MyApp {
+pub struct MongoClonerApp {
     source: Url,
     target: Url,
     rt: Runtime,
     source_client: Option<Arc<DbClient>>,
-    collections: Option<Promise<MongoResult<CollectionsVec>>>,
+    collections: Option<Promise<MongoResult<Vec<Db>>>>,
     mg_err: Option<(String, MongoError)>,
 }
 
-impl Default for MyApp {
+impl Default for MongoClonerApp {
     fn default() -> Self {
         Self {
             source: Url::parse("mongodb://username:password@localhost:27017").unwrap(),
@@ -35,8 +32,46 @@ impl Default for MyApp {
     }
 }
 
-impl epi::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
+impl MongoClonerApp {
+    pub fn new(CreationContext { egui_ctx: ctx, .. }: &CreationContext) -> Self {
+        let mut fonts = FontDefinitions::default();
+
+        fonts.font_data.insert(
+            "Roboto-Regular".to_owned(),
+            FontData::from_static(include_bytes!("../fonts/Roboto/Roboto-Regular.ttf")),
+        );
+
+        fonts.font_data.insert(
+            "Roboto-Bold".to_owned(),
+            FontData::from_static(include_bytes!("../fonts/Roboto/Roboto-Bold.ttf")),
+        );
+
+        fonts.font_data.insert(
+            "Fira-Code-Regular".to_owned(),
+            FontData::from_static(include_bytes!(
+                "../fonts/Fira_Code/static/FiraCode-Regular.ttf"
+            )),
+        );
+
+        fonts.families.insert(
+            FontFamily::Proportional,
+            vec!["Roboto-Regular".into(), "Roboto-Bold".into()],
+        );
+
+        fonts
+            .families
+            .insert(FontFamily::Monospace, vec!["Fira-Code-Regular".into()]);
+
+        ctx.set_fonts(fonts);
+
+        ctx.set_visuals(Visuals::dark());
+
+        Self::default()
+    }
+}
+
+impl App for MongoClonerApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut Frame) {
         if let Some((stage, ex)) = self.mg_err.clone() {
             egui::Window::new("Mongo Error").show(ctx, |ui| {
                 ui.heading(&stage);
@@ -114,43 +149,5 @@ impl epi::App for MyApp {
                 });
             });
         });
-    }
-
-    fn setup(&mut self, ctx: &Context, _frame: &Frame, _storage: Option<&dyn Storage>) {
-        let mut fonts = FontDefinitions::default();
-
-        fonts.font_data.insert(
-            "Roboto-Regular".to_owned(),
-            FontData::from_static(include_bytes!("../fonts/Roboto/Roboto-Regular.ttf")),
-        );
-
-        fonts.font_data.insert(
-            "Roboto-Bold".to_owned(),
-            FontData::from_static(include_bytes!("../fonts/Roboto/Roboto-Bold.ttf")),
-        );
-
-        fonts.font_data.insert(
-            "Fira-Code-Regular".to_owned(),
-            FontData::from_static(include_bytes!(
-                "../fonts/Fira_Code/static/FiraCode-Regular.ttf"
-            )),
-        );
-
-        fonts.families.insert(
-            FontFamily::Proportional,
-            vec!["Roboto-Regular".into(), "Roboto-Bold".into()],
-        );
-
-        fonts
-            .families
-            .insert(FontFamily::Monospace, vec!["Fira-Code-Regular".into()]);
-
-        ctx.set_fonts(fonts);
-
-        ctx.set_visuals(Visuals::dark());
-    }
-
-    fn name(&self) -> &str {
-        "Mongo Cloner"
     }
 }

@@ -6,10 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-eframe = { version = "0.17.0", default-features = false, features = ["egui_glium"] }
+eframe = "0.18.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 url = "2"
 tokio = { version = "1.18", features = ["full"] }
 mongodb = "2.2"
 poll-promise = "0.1.0"
+image = "0.24.2"

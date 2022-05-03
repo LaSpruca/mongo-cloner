@@ -2,7 +2,7 @@ mod app;
 mod db;
 mod widgets;
 
-use crate::app::MyApp;
+use crate::app::MongoClonerApp;
 use eframe::egui::Vec2;
 use tracing::metadata::LevelFilter;
 
@@ -16,8 +16,6 @@ fn main() {
         .with_max_level(LevelFilter::INFO)
         .init();
 
-    let app = MyApp::default();
-
     let native_options = eframe::NativeOptions {
         initial_window_size: Some(Vec2 {
             x: 1000.0,
@@ -26,5 +24,9 @@ fn main() {
         ..Default::default()
     };
 
-    eframe::run_native(Box::new(app), native_options);
+    eframe::run_native(
+        "Mongo Cloner",
+        native_options,
+        Box::new(|ctx| Box::new(MongoClonerApp::new(ctx))),
+    );
 }
