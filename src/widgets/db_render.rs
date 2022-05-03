@@ -1,6 +1,6 @@
 use crate::db::Db;
 use eframe::{
-    egui::{Response, RichText, ScrollArea, Ui, Widget},
+    egui::{Response, RichText, Ui, Widget},
     epaint::FontFamily,
 };
 

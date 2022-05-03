@@ -56,7 +56,7 @@ impl App for MongoClonerApp {
             // let side_padding = ctx.available_rect().height() / 2.0 * 0.25;
 
             ui.columns(2, |columns| {
-                columns[0].vertical(|ui| {
+                columns[0].vertical_centered(|ui| {
                     ui.heading("Source");
                     ui.add(&mut ServerAddress::new(&mut self.source));
                     if ui.button("Connect").clicked() {
@@ -67,7 +67,7 @@ impl App for MongoClonerApp {
                     }
                 });
 
-                columns[1].vertical(|ui| {
+                columns[1].vertical_centered(|ui| {
                     ui.heading("Target");
                     ui.add(&mut ServerAddress::new(&mut self.target));
                 });
@@ -78,9 +78,12 @@ impl App for MongoClonerApp {
                     match res {
                         Ok(dbs) => {
                             ScrollArea::vertical().show(ui, |ui| {
-                                for db in dbs {
-                                    ui.add(&mut DbDisplay::new(db));
-                                }
+                                ui.set_width(ctx.available_rect().width());
+                                ui.vertical_centered(|ui| {
+                                    for db in dbs {
+                                        ui.add(&mut DbDisplay::new(db));
+                                    }
+                                });
                             });
                         }
                         Err(ex) => {
@@ -90,11 +93,13 @@ impl App for MongoClonerApp {
                         }
                     }
                 } else {
-                    ui.centered_and_justified(|ui| {
-                        ui.vertical(|ui| {
-                            ui.label("Loading, please wait");
-                            ui.spinner();
-                        });
+                    ui.vertical_centered(|ui| {
+                        ui.label("Loading, please wait");
+                        ui.spinner();
+                        if ui.button("Cancel").clicked() {
+                            self.collections = None;
+                            self.source_client = None;
+                        }
                     });
                 }
             }

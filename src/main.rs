@@ -21,7 +21,7 @@ fn main() {
     let native_options = eframe::NativeOptions {
         initial_window_size: Some(Vec2 {
             x: 1000.0,
-            y: 500.0,
+            y: 750.0,
         }),
         ..Default::default()
     };
