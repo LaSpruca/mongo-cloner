@@ -21,6 +21,21 @@ impl<'a> DbDisplay<'a> {
                         ui.label("Rename to: ");
                         ui.text_edit_singleline(&mut self.db.db_name.rename);
                     });
+                    ui.horizontal(|ui| {
+                        if ui.button("All").clicked() {
+                            self.db
+                                .collections
+                                .iter_mut()
+                                .for_each(|f| f.selected = true);
+                        }
+
+                        if ui.button("None").clicked() {
+                            self.db
+                                .collections
+                                .iter_mut()
+                                .for_each(|f| f.selected = false);
+                        }
+                    });
                     for collection in self.db.collections.iter_mut() {
                         ui.horizontal(|ui| {
                             ui.checkbox(&mut collection.selected, collection.name.as_str());
