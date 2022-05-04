@@ -9,19 +9,22 @@ use eframe::{egui::Vec2, IconData};
 use tracing::metadata::LevelFilter;
 
 fn main() {
+    // Setup logging
     #[cfg(debug_assertions)]
     tracing_subscriber::fmt::fmt()
-        .with_max_level(LevelFilter::DEBUG)
+        .with_env_filter("debug,rustls=info")
         .init();
     #[cfg(not(debug_assertions))]
     tracing_subscriber::fmt::fmt()
         .with_max_level(LevelFilter::INFO)
         .init();
 
+    // Load the static included icon
     let icon = image::load_from_memory(include_bytes!("../logos/logo-128x128.png"))
         .unwrap()
         .to_rgba8();
 
+    // Window options
     let native_options = eframe::NativeOptions {
         initial_window_size: Some(Vec2 {
             x: 1000.0,

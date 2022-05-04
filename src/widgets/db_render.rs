@@ -1,6 +1,6 @@
 use crate::db::Db;
 use eframe::{
-    egui::{Response, RichText, Ui, Widget},
+    egui::{CollapsingHeader, Response, RichText, Ui, Widget},
     epaint::FontFamily,
 };
 
@@ -15,36 +15,38 @@ impl<'a> DbDisplay<'a> {
 
     pub fn show(&mut self, ui: &mut Ui) -> Response {
         ui.horizontal(|ui| {
-            ui.collapsing(self.db.db_name.name.as_str(), |ui| {
-                ui.vertical(|ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Rename to: ");
-                        ui.text_edit_singleline(&mut self.db.db_name.rename);
-                    });
-                    ui.horizontal(|ui| {
-                        if ui.button("All").clicked() {
-                            self.db
-                                .collections
-                                .iter_mut()
-                                .for_each(|f| f.selected = true);
-                        }
-
-                        if ui.button("None").clicked() {
-                            self.db
-                                .collections
-                                .iter_mut()
-                                .for_each(|f| f.selected = false);
-                        }
-                    });
-                    for collection in self.db.collections.iter_mut() {
+            CollapsingHeader::new(self.db.db_name.name.as_str())
+                .default_open(true)
+                .show(ui, |ui| {
+                    ui.vertical(|ui| {
                         ui.horizontal(|ui| {
-                            ui.checkbox(&mut collection.selected, collection.name.as_str());
-                            ui.label(RichText::new("->").family(FontFamily::Monospace));
-                            ui.text_edit_singleline(&mut collection.rename);
+                            ui.label("Rename to: ");
+                            ui.text_edit_singleline(&mut self.db.db_name.rename);
                         });
-                    }
-                });
-            })
+                        ui.horizontal(|ui| {
+                            if ui.button("All").clicked() {
+                                self.db
+                                    .collections
+                                    .iter_mut()
+                                    .for_each(|f| f.selected = true);
+                            }
+
+                            if ui.button("None").clicked() {
+                                self.db
+                                    .collections
+                                    .iter_mut()
+                                    .for_each(|f| f.selected = false);
+                            }
+                        });
+                        for collection in self.db.collections.iter_mut() {
+                            ui.horizontal(|ui| {
+                                ui.checkbox(&mut collection.selected, collection.name.as_str());
+                                ui.label(RichText::new("->").family(FontFamily::Monospace));
+                                ui.text_edit_singleline(&mut collection.rename);
+                            });
+                        }
+                    });
+                })
         })
         .response
     }

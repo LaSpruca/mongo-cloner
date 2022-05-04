@@ -68,8 +68,10 @@ impl<'a> ServerAddress<'a> {
             ui.horizontal(|ui| {
                 ui.horizontal(|ui| {
                     ui.label("Host");
-                    if ui.text_edit_singleline(&mut host).changed() {
-                        self.source_field.set_host(Some(host.as_str())).unwrap();
+                    if ui.text_edit_singleline(&mut host).changed()
+                        && self.source_field.set_host(Some(host.trim())).is_err()
+                    {
+                        error!("Ahhh fuck");
                     };
                 });
                 ui.horizontal(|ui| {
